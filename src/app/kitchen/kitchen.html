@@ -1,0 +1,45 @@
+
+<div class="backstretch" id="kitchenBackground"></div>
+
+
+<div class="container">
+ <ul class="collection with-header">
+    <li class="collection-header"><h4>Заказанные блюда</h4></li>
+    <div ng-repeat="order in vm.ordersList.awaitingOrders">
+        <li class="collection-item avatar" id="kitchenOrdersItem">
+          <i class="material-icons circle green">{{vm.chooseLogo(order.menuInfo)}}</i>
+          <span class="title"><h6>{{order.menuInfo.title}}</h5></span>
+          <p id="beginCookItemP">
+          <blockquote>Состав: {{order.menuInfo.ingredients.join(', ')}}
+          </blockquote>
+          <br>
+             Время заказа: {{order.ordersTime | date : 'shortTime'}}
+          </p>
+          <a class="secondary-content waves-effect waves-light btn" id="beginCookButton" ng-click="vm.startCooking(order)"><i class="material-icons right">restaurant</i>Начать готовить</a>
+        </li>
+    </div>
+  </ul>
+
+  <ul class="collection with-header">
+    <li class="collection-header"><h4>Сейчас готовятся</h4></li>
+    <div ng-repeat="order in vm.ordersList.ordersInProgress">
+        <li class="collection-item avatar" id="kitchenOrdersItem">
+          <i class="material-icons circle green">{{vm.chooseLogo(order.menuInfo)}}</i>
+          <span class="title"><h6>{{order.menuInfo.title}}</h5></span>
+          <p id="beginCookItemP">
+          <blockquote>Состав: {{order.menuInfo.ingredients.join(', ')}}
+          </blockquote>
+          <br>
+             Время заказа: {{order.ordersTime | date : 'shortTime'}}
+          <br>
+             Начало готовки: {{order.startCookingTime | date : 'shortTime'}}
+          </p>
+          <a class="secondary-content waves-effect waves-light btn" id="beginCookButton" ng-click="vm.startDelivery(order)"><i class="material-icons right">send</i>Доставить</a>
+        </li>
+    </div>
+  </ul>
+
+
+
+
+</div>

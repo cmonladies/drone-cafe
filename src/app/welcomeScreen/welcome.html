@@ -1,0 +1,25 @@
+<div id="welcomeDiv">
+
+    <div class="container">
+      <div class="row">
+        <div class="col s6 offset-s3 z-depth-1 orange lighten-5" id="panellLogin">
+            <h5 id="title">Введи имя и email для доступа к заказу </h5>
+
+            <form name="loginForm">
+                <div class="input-field" id="username" >
+                    <input type="text" class="validate" ng-model="vm.user.name" required>
+                    <label for="username">Имя</label>
+                </div>
+                <div class="input-field" id="username">
+                    <input type="email" class="validate" name="emailInput" ng-model="vm.user.email" required>
+                    <label for="email" data-error="Введи корректный email-адрес!">Email</label>
+                </div>
+                <a class="waves-effect waves-light btn" ng-href="/#!/client" ng-click="vm.login();"  id="loginbtn" ng-disabled="loginForm.$invalid">Login</a>
+            </form>
+
+
+        </div>
+      </div>
+    </div>
+
+</div>

@@ -1,0 +1,192 @@
+
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+       $('ul.tabs').tabs();
+    });
+
+</script>
+
+<div class="navbar-fixed">
+  <nav>
+    <div class="nav-wrapper orange lighten-5" style="padding-left: 10px;">
+
+      <a class="brand-logo black-text ">{{vm.user.name}}, Ваш баланс {{vm.user.credit}} Галактических евро</a>
+
+      <ul class="right hide-on-med-and-down">
+        <li><a class="waves-effect waves-light btn" ng-click="vm.deposit(100)"><i class="material-icons right">add</i>Пополнить</a></li>
+      </ul>
+    </div>
+  </nav>
+</div>
+
+<div class="backstretch" id="clientBackground"></div>
+
+  <div class="container">
+
+    <h1 class="center-align orange-text text-lighten-5" >Ваш заказ:</h1>
+
+
+    <ul class="collapsible" data-collapsible="accordion" ng-repeat="dish in vm.currentOrder track by $index">
+
+        <li>
+          <div class="collapsible-header" ng-click="dish.extended = dish.extended ? false : true;"><i class="material-icons">{{vm.chooseLogo(dish.menuInfo)}}</i> <span class="new badge" data-badge-caption="">{{dish.status}}</span> {{dish.menuInfo.title}}</div>
+          <div class="white" ng-show="dish.extended">
+              <div class="row">
+                  <div class="col s6" style="padding: 15px;"><img class="responsive-img" style="margin:15px;" ng-src="{{dish.menuInfo.image}}">
+                  </div>
+                  <div class="col s6">
+                      <h4 class="center-align">{{dish.menuInfo.title}}</h4>
+                      <span>Состав: {{dish.menuInfo.ingredients.join(', ')}}</span>
+                      <h5>Цена: {{dish.menuInfo.price | currency}}</h5>
+                      <h5>Время заказа:  {{dish.ordersTime | date : 'shortTime'}}</h5>
+                      <a class="waves-effect waves-light btn" ng-click="vm.moneyBack(dish)" ng-if="dish.status == 'Возникли сложности'"><i class="material-icons right">add</i>Вернуть деньги</a>
+
+                  </div>
+              </div>
+          </div>
+        </li>
+
+  </ul>
+
+
+<div style="width: 100%;text-align: center; margin-bottom: 15px;" ng-click="vm.menuShowFlag = vm.menuShowFlag ? false : true;">
+<a class="waves-effect waves-light btn center"><i class="material-icons left">cloud</i>{{vm.menuShowFlag ? "Скрыть меню" : "Заказать еще" }}</a>
+</div>
+
+<div class="center orange-text text-lighten-5" ng-show="vm.menuShowFlag">
+
+    <h1>Попробуйте нашу изысканную кухню!</h1>
+        <div>Наше меню состоит из Галактических блюд, созданных только из свежих
+        продуктов с марса и юпитера
+        </div>
+
+        <div class="row">
+            <hr>
+
+            <ul id="tabs-swipe-demo" class="tabs">
+                <li class="tab col s4"><a class="active" href="#test-swipe-1" ng-click="vm.menuFilter = 'mainCourse'">Основные блюда</a></li>
+                <li class="tab col s4"><a href="#test-swipe-2" ng-click="vm.menuFilter = 'drinks'">Напитки</a></li>
+                <li class="tab col s4"><a href="#test-swipe-3" ng-click="vm.menuFilter = 'desert'">Десерты</a></li>
+            </ul>
+
+            <div id="test-swipe-1" class="col s12 white">
+
+                <div class="row grey-text text-darken-4 white">
+                  <h4 class="center"> Выбирай основное блюдо!</h4>
+                  <div class="col s12">
+                    <div class="clearfix" >
+                    <!-- item  -->
+                        <div class="col m4 s12" ng-repeat="menuItem in vm.menu | filter:{type:vm.menuFilter}">
+                            <div class="card hoverable" style="height: 500px;">
+                                <div class="card-image">
+                                    <img  class="activator" style=" max-height: 250px;" src="{{menuItem.image}}">
+                                </div>
+                                <div class="card-title">
+                                {{menuItem.title}}
+                                </div>
+                                <div class="card-action">
+                                    <h5>Цена: {{menuItem.price | currency}}</h5>
+
+                                      <a class="waves-effect waves-light btn" ng-disabled='menuItem.price > vm.user.credit' ng-click="vm.addOrder(menuItem)"><i class="material-icons left">local_dining</i>Заказать!</a>
+
+                                    <h6 class="red-text text=darken-3" ng-if='menuItem.price > vm.user.credit'>Пополни счет на {{(menuItem.price - vm.user.credit) | currency}}</h6>
+
+                                </div>
+                                <div class="card-reveal">
+                                    <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                                    <p class="card-title grey-text text-darken-4">
+                                    {{menuItem.title}}
+                                    </p>
+                                    <p>Состав: {{menuItem.ingredients.join(', ')}} </p>
+                                  </div>
+                            </div>
+                        </div>
+                    <!-- item  end -->
+                    </div>
+                  </div>
+                </div>
+
+            </div>
+
+
+            <div id="test-swipe-2" class="col s12 white">
+
+                <div class="row grey-text text-darken-4 white">
+                  <h4 class="center"> Выбирай напитки!</h4>
+                  <div class="col s12">
+                    <div class="clearfix" >
+                    <!-- item  -->
+                        <div class="col m4 s12" ng-repeat="menuItem in vm.menu | filter:{type:vm.menuFilter}">
+                            <div class="card hoverable" style="height: 500px;">
+                                <div class="card-image">
+                                    <img  class="activator" style=" max-height: 250px;" src="{{menuItem.image}}">
+                                </div>
+                                <div class="card-title">
+                                {{menuItem.title}}
+                                </div>
+                                <div class="card-action">
+                                    <h5>Цена: {{menuItem.price | currency}}</h5>
+
+                                      <a class="waves-effect waves-light btn" ng-disabled='menuItem.price > vm.user.credit' ng-click="vm.addOrder(menuItem)"><i class="material-icons left">local_dining</i>Заказать!</a>
+
+                                    <h6 class="red-text text=darken-3" ng-if='menuItem.price > vm.user.credit'>Пополни счет на {{(menuItem.price - vm.user.credit) | currency}}</h6>
+
+                                </div>
+                                <div class="card-reveal">
+                                    <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                                    <p class="card-title grey-text text-darken-4">
+                                    {{menuItem.title}}
+                                    </p>
+                                    <p>Состав: {{menuItem.ingredients.join(', ')}} </p>
+                                  </div>
+                            </div>
+                        </div>
+                    <!-- item  end -->
+                    </div>
+                  </div>
+                </div>
+
+            </div>
+
+            <div id="test-swipe-3" class="col s12 white">
+
+                <div class="row grey-text text-darken-4 white">
+                  <h4 class="center"> Выбирай десерты!</h4>
+                  <div class="col s12">
+                    <div class="clearfix" >
+                   <!-- item  -->
+                        <div class="col m4 s12" ng-repeat="menuItem in vm.menu | filter:{type:vm.menuFilter}">
+                            <div class="card hoverable" style="height: 500px;">
+                                <div class="card-image">
+                                    <img  class="activator" style=" max-height: 250px;" src="{{menuItem.image}}">
+                                </div>
+                                <div class="card-title">
+                                {{menuItem.title}}
+                                </div>
+                                <div class="card-action">
+                                    <h5>Цена: {{menuItem.price | currency}}</h5>
+
+                                      <a class="waves-effect waves-light btn" ng-disabled='menuItem.price > vm.user.credit' ng-click="vm.addOrder(menuItem)"><i class="material-icons left">local_dining</i>Заказать!</a>
+
+                                    <h6 class="red-text text=darken-3" ng-if='menuItem.price > vm.user.credit'>Пополни счет на {{(menuItem.price - vm.user.credit) | currency}}</h6>
+
+                                </div>
+                                <div class="card-reveal">
+                                    <span class="card-title grey-text text-darken-4"><i class="material-icons right">close</i></span>
+                                    <p class="card-title grey-text text-darken-4">
+                                    {{menuItem.title}}
+                                    </p>
+                                    <p>Состав: {{menuItem.ingredients.join(', ')}} </p>
+                                  </div>
+                            </div>
+                        </div>
+                    <!-- item  end -->
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+        </div>
+</div>
