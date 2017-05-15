@@ -1,9 +1,13 @@
 'use strict'
 
+
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost:27017/dron-cafe');
-const Schema = mongoose.Schema;
+
+const userAPI = require("./db/client/clientDB.js");
+const ordersAPI = require("./db/orders/ordersDB.js");
+
 
 const express = require("express");
 const app = express();
@@ -28,33 +32,6 @@ app.use(function(err, req, res, next) {
 
 
 
-let UserSchema = new Schema({
-  name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, trim: true, index: { unique: true } },
-  credit: {type: Number, required: true}
-});
-
-let Users = mongoose.model('users', UserSchema);
-
-let OrderaSchema = new Schema({
-  userID: {type: Schema.ObjectId, required: true, trim: true},
-  status: {type: String, required: true, trim: true},
-  ordersTime: {type: Date, required: true, default: Date.now},
-  startCookingTime: {type: Date},
-  showToClient: {type: Boolean, default: true},
-  menuInfo: { title: String,
-              image: {type: String, trim: true},
-              id: Number,
-              rating: Number,
-              type: {type: String, trim: true},
-              price: Number,
-              ingredients: [] }
-});
-
-
-let Order = mongoose.model('orders', OrderaSchema);
-
-
 //Используется для сохранения сокетов активных клиентов
 let connectedUsers = {};
 
@@ -69,120 +46,77 @@ io.sockets.on('connection', function (socket) {
   socket.once('checkUser', function (user) {
     let currentUserId;
 
-    Users.findOne({email: user.email}).exec(function (err, currentUser) {
-
-        if (currentUser) {
+    userAPI.checkUser(user.email).then(
+      result => {
+        if (!result) {
+            user.credit = 100;
+            return userAPI.saveNewUser(user);
+        }
+        else
+            return new Promise(function(resolve, reject) {
+            return resolve(result)});
+      }).then(
+      currentUser => {
             currentUserId = currentUser._id;
             connectedUsers[currentUserId] = socket;
             socket.emit('checkMailResult', currentUser);
-        }
+      }).catch(
+      err => socket.emit('checkMailResult', err));
 
-        else {
-
-            user.credit = 100;
-            let newUser = new Users (user);
-            newUser.save((err, result) => {
-                currentUserId = result._id;
-                connectedUsers[currentUserId] = socket;
-                socket.emit('checkMailResult', result);
-            });
-        }
-
-    });
 
 
 //Получаем список ранее сделанных заказов
     socket.on('getUserOrders', () => {
-
-      Order.find({"userID": currentUserId, "showToClient": true}).exec(function (err, ordersList) {
-
-          socket.emit('getUserOrdersResult',ordersList);
-
-      });
-
-
+      ordersAPI.findClientsOrders(currentUserId).then(
+        ordersList => socket.emit('getUserOrdersResult',ordersList),
+        error      => socket.emit('getUserOrdersResult',error));
     });
 
 
 //Добавление нового заказа
     socket.on('addOrder', function (order) {
 
-        Users.findById(currentUserId, function (err, user) {
-
-          let newCredit = user.credit - order.price;
-          if (newCredit >= 0) {
-
-              Users.findByIdAndUpdate(currentUserId
-                                     ,{$set: {"credit": newCredit}}
-                                     ,{new: true}
-              ,function(err, updatedUser) {
-
-                  let newOrder = new Order ({
-                    userID: currentUserId,
-                    status: 'Заказано',
-                    ordersTime: new Date(),
-                    menuInfo: order
-                  });
-
-                  newOrder.save((err, order) => {
-
-                    io.sockets.in('cookRoom').emit('incomingOrder', order);
-
-                    socket.emit('addOrderResult', {credit:updatedUser.credit
-                                                  ,status:"OK"
-                                                  ,order: order});
-
-
-                  });
-              });
-          }
-
-          else socket.emit('addOrder', {status: 'Недостаточно средств'});
-
-        });
-      });
+        userAPI.checkBalance(currentUserId, order.price)
+        .then(() => userAPI.changeBalance(currentUserId, -order.price))
+        .then((updatedUser) => ordersAPI.addNewOrder(currentUserId, order)
+          .then((order) => {
+              io.sockets.in('cookRoom').emit('incomingOrder', order);
+              socket.emit('addOrderResult', {credit:updatedUser.credit
+                                                    ,status:"OK"
+                                                    ,order: order});
+          }))
+        .catch((error) => socket.emit('addOrderResult', {status:error}));
+    });
 
 
 //Возврат средств за блюдо
     socket.on('moneyBack', (order) => {
-
-      Promise.all([Order.findByIdAndUpdate(order._id, {$set: {"showToClient": false}} ,{new: true}),
-                  Users.findByIdAndUpdate(currentUserId ,{ $inc : { credit : order.menuInfo.price } },{new: true})
-                  ]).then(
-                  result => socket.emit('moneyBackResult', {status: "OK", newCredit: result[1].credit}),
-                  error  => socket.emit('moneyBackResult', error));
+        Promise.all([ordersAPI.hideOrder(order._id),
+                    userAPI.changeBalance(currentUserId, order.menuInfo.price)]).then(
+          result => socket.emit('moneyBackResult', {status: "OK", newCredit: result[1].credit}),
+          error  => socket.emit('moneyBackResult', error));
     });
 
 
 //Скрываем блюдо из меню списка пользователя
     socket.on('hideDoneOrder', (order) => {
-
-      Order.findByIdAndUpdate(order._id, {$set: {"showToClient": false}} ,{new: true})
+      ordersAPI.hideOrder(order._id)
       .then(
       result => socket.emit('hideDoneOrderResult', 'OK'),
       error  => socket.emit('hideDoneOrderResult', error));
-
     });
 
 
 //Депозит
     socket.on('deposit', function (amount) {
-
-      Users.findByIdAndUpdate(currentUserId
-                                   ,{ $inc : { credit : amount } }
-                                   ,{new: true}
-            ,function(err, updatedUser) {
-
-                socket.emit('depositResult', updatedUser.credit);
-
+      userAPI.changeBalance(currentUserId, amount).then(
+        updatedUser => socket.emit('depositResult', updatedUser.credit),
+        err => socket.emit('depositResult', err));
       });
-    });
 
     socket.on('disconnect', function () {
-
       delete connectedUsers[currentUserId];
       console.log('user disconnected');
-
     });
 
   });
@@ -194,101 +128,55 @@ io.sockets.on('connection', function (socket) {
 
 //Получаем на список для повара, разбиавем его на два списка на сервере
     socket.on('getOrdersKitchen', function () {
-      let result = {
-        status: "OK",
-        awaitingOrders: [],
-        ordersInProgress: []
-      };
-
-      Order.find({status: {$in: ['Заказано','Готовится']}}).exec(function (err, orders) {
-
-          result.awaitingOrders = orders.filter(function(order) {
-            return order.status == "Заказано";
-          });
-          result.ordersInProgress = orders.filter(function(order) {
-            return order.status == "Готовится";
-          });
-
-          socket.emit('getOrdersKitchenResult', result);
-
-      });
-
+      ordersAPI.getOrdersKitchen().then(
+        result => socket.emit('getOrdersKitchenResult', result),
+        error  => socket.emit('getOrdersKitchenResult', error));
     });
 
 
 //Переводим блюдо в состояние готовится
     socket.on('startCooking', (ordersId) => {
 
-        Order.findByIdAndUpdate(ordersId
-                                ,{$set: {"status": 'Готовится', "startCookingTime": new Date()}}
-                                ,{new: true}
-              ,function(err, updatedOrder) {
-
-
-                  if (connectedUsers[updatedOrder.userID]) {
-                    connectedUsers[updatedOrder.userID].emit('ordersStatusChanged', updatedOrder);
-                  };
-
-                  socket.emit('startCookingResult', {status: "OK"
-                                                    ,order : updatedOrder});
-
-        });
+      ordersAPI.changeOrderStatus(ordersId, 'Готовится').then(
+        updatedOrder => {
+          if (connectedUsers[updatedOrder.userID]) {
+            connectedUsers[updatedOrder.userID].emit('ordersStatusChanged', updatedOrder);
+          };
+          socket.emit('startCookingResult', {status: "OK" ,order : updatedOrder});
+        },
+        err => socket.emit('startCookingResult', {status: err}));
     });
 
 
 //Переводим блюдо в состояние доставляется, взаимодействуем с модулем доставки
     socket.on('startDelivery', (ordersId) => {
 
-        Order.findByIdAndUpdate(ordersId
-                                ,{$set: {"status": 'Доставляется'}}
-                                ,{new: true}
-          ,function(err, updatedOrder) {
-
+      ordersAPI.changeOrderStatus(ordersId, 'Доставляется').then(
+          updatedOrder => {
             if (connectedUsers[updatedOrder.userID]) {
               connectedUsers[updatedOrder.userID].emit('ordersStatusChanged', updatedOrder);
             };
-
             socket.emit('startDeliveryResult', "OK");
+          })
+      .then(updatedOrder => deliveryService(updatedOrder)
+        .then(() => {return new Promise(function(resolve, reject) {resolve("Подано")})})
+        .catch(() => {return new Promise(function(resolve, reject) {resolve("Возникли сложности")})})
+        .then((newStatus) => ordersAPI.changeOrderStatus(ordersId, newStatus)))
+      .then((updatedOrder) => {
+        if (connectedUsers[updatedOrder.userID]) {
+          connectedUsers[updatedOrder.userID].emit('ordersStatusChanged', updatedOrder);
+        };
+      })
+      .catch(err => console.log(err));
 
-            deliveryService(updatedOrder)
-              .then(() => {
+    });
 
-                updatedOrder.status = "Подано";
-
-              })
-              .catch(() => {
-
-                updatedOrder.status = "Возникли сложности";
-
-              })
-              .then(() => {
-
-                    Order.findByIdAndUpdate(ordersId
-                                ,{$set: {"status": updatedOrder.status}}
-                                ,{new: true}
-                      ,function(err, updatedOrder) {
-
-                          if (connectedUsers[updatedOrder.userID]) {
-                            connectedUsers[updatedOrder.userID].emit('ordersStatusChanged', updatedOrder);
-                          };
-                    });
-
-
-              });
-          });
-        });
 
     socket.on('disconnect', function () {
       console.log('Cook disconnected');
     });
-
-
   });
-
-
-
 });
-
 
 
 //app.listen  - не работают сокеты

@@ -10,30 +10,29 @@ angular
 
 
         vm.cookingService.cookInitialization();
-        vm.cookingService.getOrders().then(function (result) {
-
-            vm.ordersList = {
-                ordersInProgress: result.ordersInProgress,
-                awaitingOrders: result.awaitingOrders
-            };
-
-        $scope.$apply();
-
-        });
+        vm.cookingService.getOrders().then(
+            result => {
+                vm.ordersList = {
+                    ordersInProgress: result.ordersInProgress,
+                    awaitingOrders: result.awaitingOrders
+                };
+                $scope.$apply();
+            },
+            error => alert(error));
 
 
 
         vm.startCooking = (order) => {
 
-            vm.cookingService.startCooking(order._id).then(function (result) {
-                if(result.status = "OK")
-                {
+            vm.cookingService.startCooking(order._id).then(
+                result => {
                     vm.ordersList.ordersInProgress.push(result.order);
                     vm.ordersList.awaitingOrders.splice(vm.ordersList.awaitingOrders.indexOf(order),1);
                     $scope.$apply();
-                }
-            });
+            },
+            error => alert(error));
         };
+
 
         vm.startDelivery = (order) => {
 
@@ -44,20 +43,16 @@ angular
                     $scope.$apply();
                 }
             });
-        }
+        };
+
 
         vm.getIncomingOrdes = () => {
-
             vm.cookingService.getIncomingOrdes().then(function (newOrder) {
-
-                console.log(newOrder);
                 vm.ordersList.awaitingOrders.push(newOrder);
                 $scope.$apply();
                 vm.getIncomingOrdes ();
-
             });
         };
-
         vm.getIncomingOrdes ();
 
 
@@ -65,7 +60,6 @@ angular
 
 //Подбор лого заказа
         vm.chooseLogo = (item) => {
-
             switch(item.type) {
 
                 case 'drinks' :
@@ -79,11 +73,11 @@ angular
                 case 'desert' :
                     return 'cake'
                     break;
+
+                default:
+                    return 'restaurant_menu'
+                    break;
             }
-
         };
-
-
-
 
 });

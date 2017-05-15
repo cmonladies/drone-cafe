@@ -14,61 +14,51 @@ angular
         vm.menuShowFlag = false;
 
         vm.currentOrder = [];
-
         vm.user = {};
-
 
 
 
 //Загрузка меню
         vm.menuService.getMenu().then(function(menuData) {
-
             vm.menu = menuData.data;
-
         });
 
 
 //Получение информации о подключенном пользователе
         vm.getInfo = () => {
-
             vm.user = vm.accountService.getInfo();
-
+            if (vm.user.name || vm.user.name) return true;
+            else return false;
         };
         vm.getInfo();
 
 
 //Пополнение баланса
         vm.deposit = (amount) => {
-
             vm.accountService.deposit(amount)
             .then((result) => {
                 vm.user.credit = result;
                 $scope.$apply();
             });
-
         };
 //Возврат денег за загубленную доставку
         vm.moneyBack = (order) => {
-
             vm.accountService.moneyBack(order)
             .then((result) => {
                 vm.user.credit = result;
                 vm.currentOrder.splice(vm.currentOrder.indexOf(order),1);
                 $scope.$apply();
-            });
-
+            },
+            err => alert(err));
         };
 
 //Получение текущих заказов
 
         vm.getOrders = () => {
-
             vm.accountService.getOrders()
             .then((result) => {
-
                 vm.currentOrder = result;
                 $scope.$apply();
-
             });
 
         };
@@ -76,13 +66,9 @@ angular
 
 //Добавление заказа
         vm.addOrder = (item) => {
-
             vm.accountService.addOrder(item)
-            .then((result) => {
-
-             if ( result.status == 'OK')
-                {
-
+            .then(
+                (result) => {
                     vm.currentOrder.push(result.dish);
 
                     //решает проблему с $$hashKey
@@ -92,48 +78,41 @@ angular
                     vm.user.credit = result.newCredit;
                     //Принудительно обновляет модель
                     $scope.$apply();
-                }
-            else alert(result.status);
-            });
-        };
+                },
+                err => alert(err.status));
+            };
 
 //Ожидаем смену статуса заказа
 
         vm.listenToOrderStatusChanged = () => {
-            vm.accountService.listenToOrderStatusChanged().then(function(order) {
-
+            vm.accountService.listenToOrderStatusChanged().then(
+                order => {
                 vm.currentOrder.forEach(function(item, i, arr) {
                     if (item._id == order._id) {
                         arr[i] = order;
                     }
                 });
-
                 $scope.$apply();
 
-                if (order.status == "Подано")
-                {
+                if (order.status == "Подано") {
                     setTimeout(function() {
-
                         vm.accountService.hideDoneOrder(order).then(function() {
-
                             vm.currentOrder.splice(vm.currentOrder.indexOf(order),1);
-                            console.log(order);
                             $scope.$apply();
-
                         });
-
                     }, 120 * 1000)
                 }
-
                 vm.listenToOrderStatusChanged();
-
+            },
+            err => {
+                alert('Ошибка при обнолении статуса заказа');
+                vm.listenToOrderStatusChanged();
             });
         };
         vm.listenToOrderStatusChanged();
 
 //Подбор лого заказа
         vm.chooseLogo = (item) => {
-
             switch(item.type) {
 
                 case 'drinks' :
@@ -147,11 +126,11 @@ angular
                 case 'desert' :
                     return 'cake'
                     break;
+
+                default:
+                    return 'restaurant_menu'
+                    break;
             }
-
         };
-
-
-
 
 });
