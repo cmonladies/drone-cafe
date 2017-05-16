@@ -1,18 +1,29 @@
 {
-  "name": "diplom",
+  "name": "diplom-drone-cafe",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "update-webdriver": "webdriver-manager update",
+    "preprotractor": "npm run update-webdriver",
+    "protractor": "protractor e2e-tests/protractor.conf.js"
   },
-  "author": "",
+  "author": "Vetrov Andrey",
   "license": "ISC",
   "dependencies": {
     "express": "^4.15.2",
+    "body-parser": "^1.17.1",
     "materialize-css": "^0.98.2",
     "mongoose": "^4.9.5",
     "socket.io": "^1.7.3",
     "netology-fake-drone-api": "^1.0.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "jasmine-core": "^2.6.1",
+    "mocha": "^3.3.0",
+    "protractor": "^5.1.1",
+    "request": "^2.81.0"
   }
 }

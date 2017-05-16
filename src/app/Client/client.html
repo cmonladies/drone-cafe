@@ -14,13 +14,13 @@
         <div ng-show="vm.getInfo()">
           <a class="brand-logo black-text">{{vm.user.name}}, Ваш баланс {{vm.user.credit}} Галактических евро</a>
 
-          <ul class="right hide-on-med-and-down">
+          <ul class="right">
             <li><a class="waves-effect waves-light btn" ng-click="vm.deposit(100)"><i class="material-icons right">add</i>Пополнить</a></li>
           </ul>
         </div>
         <div ng-show="!vm.getInfo()">
           <a class="brand-logo black-text">Вы не авторизированы!</a>
-            <ul class="right hide-on-med-and-down">
+            <ul class="right">
               <li><a class="waves-effect waves-light btn" ng-href="/#!/"><i class="material-icons right">input</i>Войти</a></li>
             </ul>
         </div>
