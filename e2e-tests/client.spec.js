@@ -4,12 +4,11 @@ chai.use(promised);
 const expect = chai.expect;
 
 
-describe.only('Тестируем блок клиента', function() {
+describe('Тестируем блок клиента', function() {
 
 //Перед каждым тестом авторизируемся как тестовый пользователь name=test, email=test@test.test
   beforeEach((done) => {
     browser.get('http://localhost:3008/#!/');
-
     element(by.model('vm.user.name')).sendKeys('test');
     element(by.model('vm.user.email')).sendKeys('test@test.test');
     element(by.id('loginbtn')).click();

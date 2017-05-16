@@ -85,7 +85,7 @@ io.sockets.on('connection', function (socket) {
                                                     ,status:"OK"
                                                     ,order: order});
           }))
-        .catch((error) => socket.emit('addOrderResult', {status:error}));
+        .catch((error) => socket.emit('addOrderResult', error));
     });
 
 

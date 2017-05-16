@@ -2,11 +2,23 @@ const chai = require('chai');
 const promised = require('chai-as-promised');
 chai.use(promised);
 const expect = chai.expect;
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+mongoose.connect('mongodb://localhost:27017/dron-cafe');
+const UserSchema = require('../db/client/users.schema.js');
+const OrderSchema = require('../db/orders/orders.schema.js');
+
+
 
 
 describe('Restoraunt Ordering System App', function() {
 
   it('должен вернуть Title', function() {
+
+//Удаляем базу, чтобы исключить случайные совпадения. Лучше использовать тестовую базу?
+  beforeEach((done) => {
+      UserSchema.remove({}, (err) => OrderSchema.remove({}, (err) => done()));
+  });
 
     browser.get('http://localhost:3008/#!/');
     let title = browser.getTitle();

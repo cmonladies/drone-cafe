@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha tests/app.tests.js",
     "update-webdriver": "webdriver-manager update",
     "preprotractor": "npm run update-webdriver",
     "protractor": "protractor e2e-tests/protractor.conf.js"
@@ -12,12 +12,13 @@
   "author": "Vetrov Andrey",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.15.2",
     "body-parser": "^1.17.1",
+    "express": "^4.15.2",
     "materialize-css": "^0.98.2",
     "mongoose": "^4.9.5",
+    "netology-fake-drone-api": "^1.0.1",
     "socket.io": "^1.7.3",
-    "netology-fake-drone-api": "^1.0.1"
+    "socket.io-client": "^2.0.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",

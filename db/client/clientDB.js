@@ -48,7 +48,7 @@ let userAPI = {
           if (user.credit  >= price) {
             resolve(user.credit - price);
           }
-          else reject('Пользователь не найден');
+          else reject('Недостаточно средств');
       });
     });
   },
